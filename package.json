@@ -8,7 +8,8 @@
 		"start": "NODE_ENV=production node src/app.js",
 		"start:dev": "NODE_ENV=development nodemon src/app.js",
 		"start:docker": "NODE_ENV=docker nodemon src/app.js",
-		"create:db": "node src/utilities/createDb.js"
+		"create:db": "node src/utilities/createDb.js",
+		"heroku-postbuild": "node src/utilities/createDb.js"
 	},
 	"repository": {
 		"type": "git",
