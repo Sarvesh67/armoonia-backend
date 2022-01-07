@@ -1,0 +1,38 @@
+version: '3.9'
+services:
+    armoonia-backend:
+        container_name: armoonia-backend
+        #image: armoonia-backend
+        #restart: always
+        command: npm start
+        build: .
+        ports:
+            - 5001:5001
+        volumes:
+            - ./:/usr/src/app/
+            - /usr/src/app/node_modules
+        networks:
+            - webnet
+        depends_on:
+            - armoonia-db
+        working_dir: /usr/src/app
+    armoonia-db:
+        container_name: armoonia-db
+        image: postgres:12
+        networks:
+            - webnet
+        environment:
+            #here variable are used to createdefault DB for armoonia
+            POSTGRES_PASSWORD: eatsleepcode
+            POSTGRES_USER: postgres
+            POSTGRES_DB: armoonia
+            # here it'll keep al psql data of armoonia
+            PG_DATA: /var/lib/postgresql/data
+        ports:
+            - 5432:5432
+        volumes:
+            - pgdata-armoonia:/var/lib/postgresql/data
+networks:
+    webnet:
+volumes:
+    pgdata-armoonia:
