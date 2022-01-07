@@ -1,3 +1,4 @@
+/* eslint-disable no-undef */
 const { Sequelize, Op, DataTypes } = require('sequelize');
 const config = require('../services/config.service');
 
@@ -5,20 +6,20 @@ const db = {};
 
 db.sequelize = Sequelize;
 
-db.conn = new Sequelize({
-	dialect: config.db.dialect,
-	host: config.db.host,
-	username: config.db.username,
-	password: config.db.password,
-	port: config.db.port,
-	database: config.db.database,
-	pool: {
-		max: 10,
-		acquire: 10000,
-		maxUses: 3,
-		min: 1
-	}
-});
+if (process.env.NODE_ENV === 'production') {
+	db.conn = new Sequelize(process.env.DATABASE_URL, {
+		dialect: 'postgres',
+		protocol: 'postgres',
+		dialectOptions: {
+			ssl: {
+				require: true,
+				rejectUnauthorized: false
+			}
+		}
+	});
+} else {
+	db.conn = new Sequelize(config.db);
+}
 
 db.connectDb = () => {
 	return db.conn.authenticate().then(console.log('Postgres connection succesful on port: ' + config.db.port));
