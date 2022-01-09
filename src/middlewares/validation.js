@@ -18,7 +18,8 @@ const jwtvalidation = (req, res, next) => {
 		console.log(err);
 		return res.status(500).json({
 			success: false,
-			error: 'Unauthorised user :('
+			error: 'Unauthorised user :(',
+			stack: err
 		});
 	}
 };
