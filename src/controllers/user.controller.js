@@ -290,7 +290,7 @@ const collection_array_follows = async (req, res) => {
 					collection_id: collection.id
 				}
 			}).then(follows => {
-				return follows.length();
+				return follows.length;
 			}));
 		});
 		const follow_arr = await Promise.all(collectionarr);
@@ -322,7 +322,7 @@ const nft_array_likes = async (req, res) => {
 					nft_id: nft.id
 				}
 			}).then(likes => {
-				return likes.length();
+				return likes.length;
 			}));
 		});
 		const likes_arr = await Promise.all(nftarr);
