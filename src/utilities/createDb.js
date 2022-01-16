@@ -9,7 +9,12 @@ async function public_force() {
 	});
 
 	await db.public.nft.create({
-		contract_token: 'UniqueContractTokenHere'
+		contract: 'UniqueContractHere',
+		token: 'UniqueTokenHere'
+	});
+
+	await db.public.collection.create({
+		contract: 'UniqueContractHere'
 	});
 
 	return;

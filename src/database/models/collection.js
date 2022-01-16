@@ -3,7 +3,7 @@ const DataTypes = db.DataTypes;
 const sequelize = db.conn;
 
 module.exports = sequelize.define(
-	'nfts',
+	'collections',
 	{
 		id: {
 			type: DataTypes.BIGINT,
@@ -12,10 +12,6 @@ module.exports = sequelize.define(
 			autoIncrement: true
 		},
 		contract: {
-			type: DataTypes.TEXT,
-			unique: 'contract_token'
-		},
-		token: {
 			type: DataTypes.TEXT,
 			unique: 'contract_token'
 		}

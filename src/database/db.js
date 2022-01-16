@@ -4,8 +4,10 @@ const models = require('./models/model');
 var db = Object.assign({ public: models }, conn);
 
 // Define relations here
-db.public.user.hasMany(db.public.nft, { foreignKey: 'liked_user_id', onDelete: 'CASCADE', as: 'liked_nft'});
+db.public.user.belongsToMany(db.public.nft, { through: db.public.userLikes, foreignKey: 'user_id', onDelete: 'CASCADE'});
+db.public.nft.belongsToMany(db.public.collection, { through: db.public.userLikes, foreignKey: 'nft_id', onDelete: 'CASCADE'});
 
-db.public.user.hasMany(db.public.nft, { foreignKey: 'favourited_user_id', onDelete: 'CASCADE', as: 'favourited_nft'});
+db.public.user.belongsToMany(db.public.collection, { through: db.public.userFollows, foreignKey: 'user_id', onDelete: 'CASCADE'});
+db.public.collection.belongsToMany(db.public.user, { through: db.public.userFollows, foreignKey: 'collection_id', onDelete: 'CASCADE'});
 
 module.exports = db;

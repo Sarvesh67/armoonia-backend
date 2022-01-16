@@ -139,57 +139,289 @@ const read = async (req, res) => {
 };
 
 const like_nft = async (req, res) => {
-	// Add a 'like nft' between user and nft
-	const { id } = req.user;
-	const contract_token = req.body.contract_token;
+	try {
+		// Add a 'like nft' between user and nft
+		const { id } = req.user;
+		const {contract, token} = req.body;
 
-	if (!contract_token) {
-		return res.status(400).json({
+		if (!(contract && token)) {
+			return res.status(400).json({
+				success: false,
+				msg: 'No contract token found :('
+			});
+		}
+
+		const [nft, ] = await db.public.nft.findOrCreate({
+			where: { 
+				contract: contract,
+				token: token
+			}
+		});
+
+		await db.public.userLikes.create({
+			user_id: id,
+			nft_id: nft.id
+		});
+
+		return res.status(200).json({
+			success: true,
+			msg: 'NFT liked successfully!',
+		});
+	} catch (e) {
+		console.log(e);
+		return res.status(500).json({
 			success: false,
-			msg: 'No contract token found :('
+			msg: 'Internal server error :(',
+			stack: e
 		});
 	}
-
-	const [nft, ] = await db.public.nft.findOrCreate({
-		where: { contract_token: contract_token }
-	});
-
-	const nftsaved = await nft.update({
-		liked_user_id: id
-	});
-
-	return res.status(200).json({
-		success: true,
-		msg: 'NFT liked successfully!',
-		nft: nftsaved
-	});
 };
 
-const favourite_nft = async (req, res) => {
-	// Add a 'like nft' between user and nft
-	const { id } = req.user;
-	const contract_token = req.body.contract_token;
+const follow_collection = async (req, res) => {
+	try {
+		// Add a 'follow collection' between user and collections.
+		const { id } = req.user;
+		const { contract } = req.body;
 
-	if (!contract_token) {
-		return res.status(400).json({
+		if (!contract) {
+			return res.status(400).json({
+				success: false,
+				msg: 'No contract id found :('
+			});
+		}
+
+		const [collection, ] = await db.public.collection.findOrCreate({
+			where: { 
+				contract: contract,
+			}
+		});
+
+		const collection_saved = await db.public.collection.create({
+			user_id: id,
+			collection_id: collection.id
+		});
+
+		return res.status(200).json({
+			success: true,
+			msg: 'NFT liked successfully!',
+			nft: collection_saved
+		});
+	} catch (e) {
+		console.log(e);
+		return res.status(500).json({
 			success: false,
-			msg: 'No contract token found :('
+			msg: 'Internal server error :(',
+			stack: e
 		});
 	}
+};
 
-	const [nft, ] = await db.public.nft.findOrCreate({
-		where: { contract_token: contract_token }
-	});
+const user_likes_boolean = async (req, res) => {
+	try {
+		const { contract, token } = req.body;
+		const { id } = req.user;
+		const nft = await db.public.nft.findOne({
+			where: {
+				contract: contract,
+				token: token
+			}
+		});
 
-	const nftsaved = await nft.update({
-		favourited_user_id: id
-	});
+		const nftliked = await db.public.userLikes.findOne({
+			where: {
+				user_id: id,
+				nft_id: nft.id
+			}
+		});
+		return res.status(200).json({
+			success: true,
+			likes: nftliked ? true : false
+		});
+	} catch (e) {
+		console.log(e);
+		return res.status(500).json({
+			success: false,
+			msg: 'Internal server error :(',
+			stack: e
+		});
+	}
+};
 
-	return res.status(200).json({
-		success: true,
-		msg: 'NFT favourited successfully!',
-		nft: nftsaved
-	});
+const user_follows_boolean = async (req, res) => {
+	try {
+		const { contract } = req.body;
+		const { id } = req.user;
+		const collection = await db.public.collection.findOne({
+			where: {
+				contract: contract
+			}
+		});
+
+		const collectionfollows = await db.public.userFollows.findOne({
+			where: {
+				user_id: id,
+				collection_id: collection.id
+			}
+		});
+		return res.status(200).json({
+			success: true,
+			follows: collectionfollows ? true : false
+		});
+	} catch (e) {
+		console.log(e);
+		return res.status(500).json({
+			success: false,
+			msg: 'Internal server error :(',
+			stack: e
+		});
+	}
+};
+
+const collection_array_follows = async (req, res) => {
+	try {
+		const collections = req.body;
+		const collections_saved = await db.public.collection.bulkCreate(collections, {
+			updateOnDuplicate: true
+		});
+		const collectionarr = [];
+		collections_saved.forEach(collection => {
+			collectionarr.push(db.public.userFollows.findAll({
+				where: {
+					collection_id: collection.id
+				}
+			}).then(follows => {
+				return follows.length();
+			}));
+		});
+		const follow_arr = await Promise.all(collectionarr);
+
+		return res.status(200).json({
+			success: true,
+			follow_arr: follow_arr
+		});
+	} catch (e) {
+		console.log(e);
+		return res.status(500).json({
+			success: false,
+			msg: 'Internal server error :(',
+			stack: e
+		});
+	}
+};
+
+const nft_array_likes = async (req, res) => {
+	try {
+		const nfts = req.body;
+		const nfts_saved = await db.public.collection.bulkCreate(nfts, {
+			updateOnDuplicate: true
+		});
+		const nftarr = [];
+		nfts_saved.forEach(nft => {
+			nftarr.push(db.public.userLikes.findAll({
+				where: {
+					nft_id: nft.id
+				}
+			}).then(likes => {
+				return likes.length();
+			}));
+		});
+		const likes_arr = await Promise.all(nftarr);
+
+		return res.status(200).json({
+			success: true,
+			likes_arr: likes_arr
+		});
+	} catch (e) {
+		console.log(e);
+		return res.status(500).json({
+			success: false,
+			msg: 'Internal server error :(',
+			stack: e
+		});
+	}
+};
+
+const get_nft = async (req, res) => {
+	try {
+		const { contract, token } = req.body;
+		
+		if (!(contract && token)) {
+			return res.status(400).json({
+				success: false,
+				msg: 'No contract token found :('
+			});
+		}
+
+		const [nft, ] = await db.public.nft.findOrCreate({
+			where: { 
+				contract: contract,
+				token: token
+			},
+			include: [
+				{
+					model: db.public.user
+				}
+			]
+		}); 
+
+		const nft_saved = {
+			contract: nft.contract,
+			token: nft.token,
+			likes: nft.users.length()
+		};
+
+		return res.status(200).json({
+			success: true,
+			nft: nft_saved
+		});
+	} catch (e) {
+		console.log(e);
+		return res.status(500).json({
+			success: false,
+			msg: 'Internal server error :(',
+			stack: e
+		});
+	}
+};
+
+const get_collection = async (req, res) => {
+	try {
+		const { contract } = req.body;
+		
+		if (!contract) {
+			return res.status(400).json({
+				success: false,
+				msg: 'No contract found :('
+			});
+		}
+
+		const [collection, ] = await db.public.collection.findOrCreate({
+			where: { 
+				contract: contract			},
+			include: [
+				{
+					model: db.public.user
+				}
+			]
+		}); 
+
+		const collection_saved = {
+			contract: collection.contract,
+			follows: collection.users.length()
+		};
+
+		return res.status(200).json({
+			success: true,
+			collection: collection_saved
+		});
+	} catch (e) {
+		console.log(e);
+		return res.status(500).json({
+			success: false,
+			msg: 'Internal server error :(',
+			stack: e
+		});
+	}
 };
 
 const profile = async (req, res) => {
@@ -198,12 +430,10 @@ const profile = async (req, res) => {
 		const includeMetadata = {
 			include: [
 				{
-					model: db.public.nft,
-					as: 'liked_nft'
+					model: db.public.nft
 				},
 				{
-					model: db.public.nft,
-					as: 'favourited_nft'
+					model: db.public.collection
 				}
 			]
 		};
@@ -228,4 +458,4 @@ const profile = async (req, res) => {
 	}
 };
 
-module.exports = { TestController, getNonce, login, update, read, like_nft, favourite_nft, profile };
+module.exports = { TestController, getNonce, login, update, read, like_nft, profile, follow_collection, user_likes_boolean, user_follows_boolean, collection_array_follows, nft_array_likes, get_nft, get_collection };
