@@ -312,7 +312,7 @@ const collection_array_follows = async (req, res) => {
 const nft_array_likes = async (req, res) => {
 	try {
 		const nfts = req.body;
-		const nfts_saved = await db.public.collection.bulkCreate(nfts, {
+		const nfts_saved = await db.public.nft.bulkCreate(nfts, {
 			updateOnDuplicate: true
 		});
 		const nftarr = [];
