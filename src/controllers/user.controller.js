@@ -115,9 +115,18 @@ const read = async (req, res) => {
 	// Read - Query user details from wallet address.
 	try {
 		const address = req.params.address;
-		const user = await db.public.user.findOne({
-			where: { address: address }
-		});
+		const includeMetadata = {
+			where: { address: address },
+			include: [
+				{
+					model: db.public.nft
+				},
+				{
+					model: db.public.collection
+				}
+			]
+		};
+		const user = await db.public.user.findOne(includeMetadata);
 		if(!user) {
 			return res.status(400).json({
 				success: false,
@@ -219,7 +228,10 @@ const follow_collection = async (req, res) => {
 const user_likes_boolean = async (req, res) => {
 	try {
 		const { contract, token } = req.body;
-		const { id } = req.user;
+		const address = req.params.address;
+		const [user, ] = await db.public.user.findOrCreate({
+			where: { address: address }
+		});
 		const nft = await db.public.nft.findOne({
 			where: {
 				contract: contract,
@@ -229,7 +241,7 @@ const user_likes_boolean = async (req, res) => {
 
 		const nftliked = await db.public.userLikes.findOne({
 			where: {
-				user_id: id,
+				user_id: user.id,
 				nft_id: nft.id
 			}
 		});
@@ -250,7 +262,10 @@ const user_likes_boolean = async (req, res) => {
 const user_follows_boolean = async (req, res) => {
 	try {
 		const { contract } = req.body;
-		const { id } = req.user;
+		const address = req.params.address;
+		const [user, ] = await db.public.user.findOrCreate({
+			where: { address: address }
+		});
 		const collection = await db.public.collection.findOne({
 			where: {
 				contract: contract
@@ -259,7 +274,7 @@ const user_follows_boolean = async (req, res) => {
 
 		const collectionfollows = await db.public.userFollows.findOne({
 			where: {
-				user_id: id,
+				user_id: user.id,
 				collection_id: collection.id
 			}
 		});
